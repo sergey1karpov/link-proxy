@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/db.1-create-users-table.yaml
+  - include:
+      file: db/changelog/db.2-create-links-table.yaml
+  - include:
+      file: db/changelog/db.3-create-users-links-table.yaml

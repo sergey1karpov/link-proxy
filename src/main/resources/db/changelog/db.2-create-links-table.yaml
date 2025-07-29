@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: links-table-create
+      author: your_name
+      changes:
+        - createTable:
+            tableName: links
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: old_url
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: new_url
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  value: PUBLIC
+                  constraints:
+                    nullable: false
+              - column:
+                  name: time_to_leave
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
