@@ -28,3 +28,8 @@ databaseChangeLog:
             referencedTableName: links
             referencedColumnNames: id
             constraintName: fk_user_links_link_id
+        - addUniqueConstraint:
+            tableName: user_links
+            columnNames: user_id, link_id
+            constraintName: uq_user_links_unique
+
