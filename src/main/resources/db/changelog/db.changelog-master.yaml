@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/db.2-create-links-table.yaml
   - include:
       file: db/changelog/db.3-create-users-links-table.yaml
+  - include:
+      file: db/changelog/db.4-create-manual-password-change-table.yaml

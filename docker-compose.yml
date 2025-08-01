@@ -34,6 +34,30 @@ services:
         depends_on:
             - postgres
 
+    mailhog:
+        image: mailhog/mailhog
+        container_name: mailhog
+        ports:
+            - "1025:1025" # smtp server
+            - "8025:8025" # web ui
+        networks:
+            - linkhub
+
+    rabbit:
+        image: "rabbitmq:3-management"
+        container_name: rabbitmq
+        hostname: "rabbit"
+        environment:
+            RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+            RABBITMQ_DEFAULT_USER: "rabbitmq"
+            RABBITMQ_DEFAULT_PASS: "rabbitmq"
+            RABBITMQ_DEFAULT_VHOST: "/"
+        ports:
+            - "15672:15672"
+            - "5672:5672"
+        networks:
+            - linkhub
+
 networks:
     linkhub:
 
