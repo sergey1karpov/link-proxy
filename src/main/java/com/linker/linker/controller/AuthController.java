@@ -7,6 +7,8 @@ import com.linker.linker.mail.SendManualPasswordChangeMail;
 import com.linker.linker.mapper.AuthMapper;
 import com.linker.linker.service.auth.AuthService;
 import com.linker.linker.service.auth.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Auth controller", description = "Auth API")
 public class AuthController {
     private final AuthenticationManager authManager;
     private final AuthService authService;
@@ -43,6 +46,7 @@ public class AuthController {
     private Duration refreshTokenExpirationTime;
 
     @PostMapping("/registration")
+    @Operation(summary = "Регистрация нового пользователя")
     public ResponseEntity<Object> register(
             @Validated @RequestBody RegisterRequestDto request, BindingResult bindingResult
     ) {
@@ -62,6 +66,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Вход в систему")
     public ResponseEntity<Object> login(
             @Validated @RequestBody LoginRequestDto request, BindingResult bindingResult
     ) {
@@ -81,6 +86,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
+    @Operation(summary = "Получение рефреш токена")
     public ResponseEntity<AuthResponseDto> refresh(@RequestBody Map<String, String> payload) {
         String refreshToken = payload.get("refreshToken");
         String username = this.jwtService.extractUsername(refreshToken);
@@ -95,6 +101,7 @@ public class AuthController {
     }
 
     @PostMapping("/manual-password-change")
+    @Operation(summary = "Заявка на ручную смену пароля")
     public ResponseEntity<Object> manualPasswordChangeRequest(
             @Validated @RequestBody ManualPasswordChangeRequestDto request, BindingResult bindingResult
     ) {
@@ -121,6 +128,7 @@ public class AuthController {
     }
 
     @PostMapping("/manual-password-change/{hash}")
+    @Operation(summary = "Ручное изменение пароля")
     public ResponseEntity<Object> manualPasswordChange(
         @PathVariable("hash") String hash,
         @Validated @RequestBody ManualPasswordUpdateRequestDto request,

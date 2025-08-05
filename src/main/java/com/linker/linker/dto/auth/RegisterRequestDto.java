@@ -1,5 +1,6 @@
 package com.linker.linker.dto.auth;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -8,16 +9,20 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @AllArgsConstructor
+@Schema(description = "User register DTO")
 public class RegisterRequestDto {
     @NotNull(message = "Message can not be null")
     @Length(message = "Your username must be in between 5 and 255 symbols", min = 5, max = 255)
+    @Schema(description = "User username", example = "sergey1karpov")
     private String username;
 
     @NotNull(message = "Email can not be null")
     @Email(message = "You entered incorrect email")
+    @Schema(description = "User email", example = "sergey1karpov@gmail.com")
     private String email;
 
     @NotNull(message = "Password can not be null")
     @Length(message = "Your password must be in between 5 and 255 symbols", min = 5, max = 255)
+    @Schema(description = "User password", example = "q1w2e3r4")
     private String password;
 }

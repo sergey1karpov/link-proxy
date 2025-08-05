@@ -1,8 +1,8 @@
 package com.linker.linker.entity;
 
+import com.linker.linker.entity.utils.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -67,9 +67,5 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public enum Role {
-        ROLE_USER, ROLE_ADMIN
     }
 }

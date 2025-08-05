@@ -1,5 +1,6 @@
 package com.linker.linker.entity;
 
+import com.linker.linker.entity.utils.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,8 +35,4 @@ public class Link {
 
     @ManyToMany(mappedBy = "links")
     private List<User> users = new ArrayList<>();
-
-    enum Status {
-        PUBLIC, PRIVATE
-    }
 }

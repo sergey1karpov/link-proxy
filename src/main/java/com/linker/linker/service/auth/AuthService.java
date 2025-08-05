@@ -4,6 +4,7 @@ import com.linker.linker.dto.auth.LoginRequestDto;
 import com.linker.linker.dto.auth.RegisterRequestDto;
 import com.linker.linker.dto.auth.ManualPasswordChangeRequestDto;
 import com.linker.linker.entity.User;
+import com.linker.linker.entity.utils.Role;
 import com.linker.linker.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -36,7 +37,7 @@ public class AuthService implements UserDetailsService {
         user.setUsername(mappedUser.getUsername());
         user.setEmail(mappedUser.getEmail());
         user.setPassword(encoder.encode(mappedUser.getPassword()));
-        user.setRole(User.Role.ROLE_USER);
+        user.setRole(Role.ROLE_USER);
 
         return userRepository.save(user);
     }
