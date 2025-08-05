@@ -3,6 +3,7 @@ package com.linker.linker.service.auth;
 import com.linker.linker.dto.auth.LoginRequestDto;
 import com.linker.linker.dto.auth.RegisterRequestDto;
 import com.linker.linker.dto.auth.ManualPasswordChangeRequestDto;
+import com.linker.linker.dto.auth.UserIdAndSecretCode;
 import com.linker.linker.entity.User;
 import com.linker.linker.entity.utils.Role;
 import com.linker.linker.repository.UserRepository;
@@ -11,7 +12,6 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,10 @@ public class AuthService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return this.userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    public Optional<User> getUserByEmail(String email) {
+        return this.userRepository.findByEmail(email);
     }
 
     /**
@@ -200,5 +205,35 @@ public class AuthService implements UserDetailsService {
         Optional<User> user = this.userRepository.getUserByHash(hash);
         user.get().setPassword(encoder.encode(newPassword));
         this.userRepository.save(user.get());
+    }
+
+    public int generateResetPasswordSecretCode() {
+        Random random = new Random();
+        return random.nextInt(999999) + 1;
+    }
+
+    public void saveSecretCode(long userId, String email, int secretCode, String hash) {
+        this.userRepository.saveSecretCode(
+            email, String.valueOf(secretCode), LocalDateTime.now(), userId, hash
+        );
+    }
+
+    public Optional<User> getChangedUser(String hash, String secretCode, BindingResult bindingResult) {
+        UserIdAndSecretCode userData = this.userRepository.getUserIdAndSecretCode(hash);
+
+        if(!userData.getSecretCode().equals(secretCode)) {
+            bindingResult.rejectValue("error", "", "code not matched");
+        }
+
+        return this.userRepository.findById(userData.getUserId());
+    }
+
+    public String autoChangePassword(User user) {
+        String newPass = UUID.randomUUID().toString();
+
+        user.setPassword(encoder.encode(newPass));
+        this.userRepository.save(user);
+
+        return newPass;
     }
 }

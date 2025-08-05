@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Data
 @AllArgsConstructor
-public class ManualPasswordChangeDto implements Serializable {
+public class PasswordChangeDto implements Serializable {
     private String to;
     private String subject;
     private String body;

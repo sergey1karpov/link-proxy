@@ -1,5 +1,6 @@
 package com.linker.linker.repository;
 
+import com.linker.linker.dto.auth.UserIdAndSecretCode;
 import com.linker.linker.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -65,4 +66,30 @@ public interface UserRepository extends JpaRepository<User, Long> {
         nativeQuery = true
     )
     Optional<User> getUserByHash(@Param("hash") String hash);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+        INSERT INTO auto_password_change (email, secret_code, created_at, user_id, hash)
+        VALUES (:email, :secretCode, :createdAt, :userId, :hash)
+    """, nativeQuery = true)
+    void saveSecretCode(
+            @Param("email") String email,
+            @Param("secretCode") String secretCode,
+            @Param("createdAt") LocalDateTime createdAt,
+            @Param("userId") long userId,
+            @Param("hash") String hash
+    );
+
+    @Transactional
+    @Query(
+        value = """
+            SELECT user_id, secret_code FROM auto_password_change
+            WHERE hash = :hash
+            ORDER BY created_at
+            LIMIT 1
+        """,
+        nativeQuery = true
+    )
+    UserIdAndSecretCode getUserIdAndSecretCode(String hash);
 }
