@@ -18,6 +18,12 @@ public class JwtService {
     @Value("${security.jwt.secret}")
     private String SECRET_KEY;
 
+    /**
+     * Генерация access и refresh токена
+     * @param userDetails - данные пользователя
+     * @param expirationMillis - время жизни токена
+     * @return access token
+     */
     public String generateToken(UserDetails userDetails, long expirationMillis) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())

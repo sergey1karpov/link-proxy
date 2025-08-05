@@ -50,21 +50,24 @@ public class AuthController {
     @PostMapping("/registration")
     @Operation(summary = "Регистрация нового пользователя")
     public ResponseEntity<Object> register(
-            @Validated @RequestBody RegisterRequestDto request, BindingResult bindingResult
+            @Validated @RequestBody RegisterRequestDto request,
+            BindingResult bindingResult
     ) {
-        List<String> errorsMessage = this.authService.registerValidate(
+        Map<String, String> errorsMessage = this.authService.registerValidate(
                 request.getEmail(), request.getUsername(), bindingResult
         );
+
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(errorsMessage);
         }
 
         User mappedUser = this.authMapper.toEntity(request);
         User user = this.authService.registerUser(mappedUser);
-        String jwt = this.jwtService.generateToken(user, this.accessTokenExpirationTime.toMillis());
-        String refresh = this.jwtService.generateToken(user, this.refreshTokenExpirationTime.toMillis());
 
-        return ResponseEntity.ok(new AuthResponseDto(jwt, refresh));
+        String accessToken = this.jwtService.generateToken(user, this.accessTokenExpirationTime.toMillis());
+        String refreshToken = this.jwtService.generateToken(user, this.refreshTokenExpirationTime.toMillis());
+
+        return ResponseEntity.ok(new AuthResponseDto(accessToken, refreshToken));
     }
 
     @PostMapping("/login")
@@ -72,19 +75,24 @@ public class AuthController {
     public ResponseEntity<Object> login(
             @Validated @RequestBody LoginRequestDto request, BindingResult bindingResult
     ) {
-        List<String> errorsMessage = this.authService.loginValidate(request.getUsername(), request.getPassword(), bindingResult);
+        Map<String, String> errorsMessage = this.authService.loginValidate(
+                request.getUsername(), request.getPassword(), bindingResult
+        );
+
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(errorsMessage);
         }
 
         Authentication auth = this.authManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
         UserDetails user = (UserDetails) auth.getPrincipal();
-        String jwt = this.jwtService.generateToken(user, this.accessTokenExpirationTime.toMillis());
-        String refresh = this.jwtService.generateToken(user, this.refreshTokenExpirationTime.toMillis());
-        return ResponseEntity.ok(new AuthResponseDto(jwt, refresh));
+
+        String accessToken = this.jwtService.generateToken(user, this.accessTokenExpirationTime.toMillis());
+        String refreshToken = this.jwtService.generateToken(user, this.refreshTokenExpirationTime.toMillis());
+
+        return ResponseEntity.ok(new AuthResponseDto(accessToken, refreshToken));
     }
 
     @PostMapping("/refresh-token")

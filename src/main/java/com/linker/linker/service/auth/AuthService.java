@@ -16,13 +16,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,17 +29,6 @@ public class AuthService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public User registerUser(User mappedUser) {
-        User user = new User();
-        user.setUsername(mappedUser.getUsername());
-        user.setEmail(mappedUser.getEmail());
-        user.setPassword(encoder.encode(mappedUser.getPassword()));
-        user.setRole(Role.ROLE_USER);
-
-        return userRepository.save(user);
-    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -54,45 +41,60 @@ public class AuthService implements UserDetailsService {
     }
 
     /**
+     * Регистрирует пользователя в системе
+     * @param mappedUser маппинг данных из {@link RegisterRequestDto}
+     * @return возвращает сохраненного юзера в бд
+     */
+    @Transactional
+    public User registerUser(User mappedUser) {
+        User user = new User();
+        user.setUsername(mappedUser.getUsername());
+        user.setEmail(mappedUser.getEmail());
+        user.setPassword(encoder.encode(mappedUser.getPassword()));
+        user.setRole(Role.ROLE_USER);
+
+        return userRepository.save(user);
+    }
+
+    /**
      * Проверяет, существуют ли уже в базе указанные email и username,
      * а также обрабатывает валидационные ошибки из {@link RegisterRequestDto} при регистрации.
      *
-     * @param email    email пользователя для проверки
-     * @param username имя пользователя для проверки
+     * @param email         email пользователя для проверки
+     * @param username      имя пользователя для проверки
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      * @return список сообщений об ошибках, если таковые есть
      */
-    public List<String> registerValidate(String email, String username, BindingResult bindingResult) {
-        if(this.userRepository.findByEmail(email).isPresent()) {
+    public Map<String, String> registerValidate(String email, String username, BindingResult bindingResult) {
+        // Проверка на существование email'а в бд
+        if (this.userRepository.findByEmail(email).isPresent()) {
             bindingResult.rejectValue("email", "", "Email already exists");
         }
-        if(this.userRepository.findByUsername(username).isPresent()) {
+
+        // Проверка на существование username в бд
+        if (this.userRepository.findByUsername(username).isPresent()) {
             bindingResult.rejectValue("username", "", "Username already exists");
         }
 
-        return bindingResult.getAllErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+        return validationHandler(bindingResult);
     }
 
     /**
      * Проверяет, существуют ли в базе юзер с указанным username,
      * а также обрабатывает валидационные ошибки из {@link LoginRequestDto} при логине.
      *
-     * @param username имя пользователя для проверки
+     * @param username      имя пользователя для проверки
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      * @return список сообщений об ошибках, если таковые есть
      */
-    public List<String> loginValidate(String username, String password, BindingResult bindingResult) {
+    public Map<String, String> loginValidate(String username, String password, BindingResult bindingResult) {
         Optional<User> user = this.userRepository.findByUsername(username);
 
         if (user.isEmpty() || !passwordEncoder.matches(password, user.get().getPassword())) {
             bindingResult.rejectValue("username", "", "User not found or password incorrect");
         }
 
-        return bindingResult.getAllErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+        return validationHandler(bindingResult);
     }
 
     /**
@@ -235,5 +237,14 @@ public class AuthService implements UserDetailsService {
         this.userRepository.save(user);
 
         return newPass;
+    }
+
+    public Map<String, String> validationHandler(BindingResult bindingResult) {
+        return bindingResult.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        err -> Optional.ofNullable(err.getDefaultMessage()).orElse("Invalid value"),
+                        (existing, replacement) -> existing // если дублируются — берем первый
+                ));
     }
 }
