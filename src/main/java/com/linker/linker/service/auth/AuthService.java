@@ -3,12 +3,12 @@ package com.linker.linker.service.auth;
 import com.linker.linker.dto.auth.LoginRequestDto;
 import com.linker.linker.dto.auth.RegisterRequestDto;
 import com.linker.linker.dto.auth.ManualPasswordChangeRequestDto;
-import com.linker.linker.dto.auth.UserIdAndSecretCode;
 import com.linker.linker.entity.User;
+import com.linker.linker.entity.utils.ResetType;
 import com.linker.linker.entity.utils.Role;
+import com.linker.linker.exception.UserNotFoundException;
 import com.linker.linker.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -65,13 +65,12 @@ public class AuthService implements UserDetailsService {
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      * @return список сообщений об ошибках, если таковые есть
      */
+    @Transactional(readOnly = true)
     public Map<String, String> registerValidate(String email, String username, BindingResult bindingResult) {
-        // Проверка на существование email'а в бд
         if (this.userRepository.findByEmail(email).isPresent()) {
             bindingResult.rejectValue("email", "", "Email already exists");
         }
 
-        // Проверка на существование username в бд
         if (this.userRepository.findByUsername(username).isPresent()) {
             bindingResult.rejectValue("username", "", "Username already exists");
         }
@@ -87,6 +86,7 @@ public class AuthService implements UserDetailsService {
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      * @return список сообщений об ошибках, если таковые есть
      */
+    @Transactional(readOnly = true)
     public Map<String, String> loginValidate(String username, String password, BindingResult bindingResult) {
         Optional<User> user = this.userRepository.findByUsername(username);
 
@@ -105,14 +105,13 @@ public class AuthService implements UserDetailsService {
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      * @return список сообщений об ошибках, если таковые есть
      */
-    public List<String> emailValidate(String email, BindingResult bindingResult) {
+    @Transactional(readOnly = true)
+    public Map<String, String> emailValidate(String email, BindingResult bindingResult) {
         if(this.userRepository.findByEmail(email).isEmpty()) {
             bindingResult.rejectValue("email", "", "User with this email not found");
         }
 
-        return bindingResult.getAllErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+        return validationHandler(bindingResult);
     }
 
     /**
@@ -126,25 +125,28 @@ public class AuthService implements UserDetailsService {
     public String insertIntoResetTable(String email) {
         String hash = UUID.randomUUID().toString();
         this.userRepository.insertIntoResetTable(email, hash, LocalDateTime.now());
+
         return hash;
     }
 
     /**
-     * Ограничитель на запросы по изменению пароля,
-     * пользователь имеет возможность оправить 1 запрос в 5 минут
+     * Ограничитель на запросы по изменению пароля.
+     * Пользователь имеет возможность оправить 1 запрос в 5 минут на конкретный email,
      * иначе получит валидационную ошибку с просьбой подождать несколько минут
      *
      * @param email имя пользователя для проверки
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      */
-    public void checkThrottle(String email, BindingResult bindingResult) {
-        Optional<LocalDateTime> lastTime = this.userRepository.getCreatedAtTimeToResetPass(email);
+    @Transactional(readOnly = true)
+    public void checkCountOfAttempts(String email, BindingResult bindingResult, ResetType resetType) {
+        LocalDateTime lastTime = switch (resetType) {
+            case ResetType.AUTO-> userRepository.getCreatedAtTimeToAutoResetPass(email);
+            case ResetType.MANUAL -> userRepository.getCreatedAtTimeToResetPass(email);
+        };
 
-        if (lastTime.isEmpty()) return;
+        if (lastTime == null) return;
 
-        long minutesPassed = checkTime(lastTime);
-
-        if (minutesPassed < 5) {
+        if (checkTime(lastTime) < 5) {
             bindingResult.rejectValue("email", "", "Wait 5 minutes before new attempt.");
         }
     }
@@ -155,29 +157,31 @@ public class AuthService implements UserDetailsService {
      * @param hash имя пользователя для проверки
      * @param bindingResult {@link org.springframework.validation.BindingResult} для накопления ошибок
      */
-    public void hashValidate(String hash, BindingResult bindingResult) {
-        Optional<LocalDateTime> lastTime = this.userRepository.getCreatedAtTimeToUpdatePass(hash);
+    @Transactional(readOnly = true)
+    public void hashValidate(String hash, BindingResult bindingResult, ResetType resetType) {
+        LocalDateTime lastTime = switch (resetType) {
+            case ResetType.AUTO-> userRepository.getCreatedAtTimeToAutoUpdatePass(hash);
+            case ResetType.MANUAL -> this.userRepository.getCreatedAtTimeToUpdatePass(hash);
+        };
 
-        if (lastTime.isEmpty()) return;
+        if (lastTime == null) return;
 
-        long minutesPassed = checkTime(lastTime);
-
-        if (minutesPassed > 10) {
+        if (checkTime(lastTime) > 10) {
             bindingResult.rejectValue("error", "", "Hash not walid");
         }
     }
 
     /**
      * Получаем разницу в минутах из поля created_at в таблице manual_password_change
-     * для методов {@link #checkThrottle(String, BindingResult)} и {@link #hashValidate(String, BindingResult)}
+     * для методов {@link #checkCountOfAttempts(String, BindingResult, ResetType)}
+     * и {@link #hashValidate(String, BindingResult, ResetType)}
      *
      * @param lastTime время когда была сделана запись с хешем
      * @return разница во времени в минутах
      */
-    public long checkTime(Optional<LocalDateTime> lastTime) {
-        LocalDateTime createdAt = lastTime.get();
+    public long checkTime(LocalDateTime lastTime) {
         LocalDateTime now = LocalDateTime.now();
-        Duration duration = Duration.between(createdAt, now);
+        Duration duration = Duration.between(lastTime, now);
 
         return duration.toMinutes();
     }
@@ -190,10 +194,18 @@ public class AuthService implements UserDetailsService {
      * @param oldPassword старый пароль
      * @param bindingResult для ошибок валидации
      */
-    public void compareOldUserPassword(String hash, String oldPassword, BindingResult bindingResult) {
+    @Transactional(readOnly = true)
+    public Map<String, String> compareOldUserPassword(String hash, String oldPassword, BindingResult bindingResult) {
         Optional<User> user = this.userRepository.getUserByHash(hash);
+        if (user.isEmpty()) throw new UserNotFoundException("User not found");
+
         boolean matches = this.passwordEncoder.matches(oldPassword, user.get().getPassword());
-        if (!matches) bindingResult.rejectValue("error", "", "PASSWORD NOT MATCHED");
+
+        if (!matches) {
+            bindingResult.rejectValue("error", "", "PASSWORD NOT MATCHED");
+        }
+
+        return validationHandler(bindingResult);
     }
 
     /**
@@ -205,31 +217,81 @@ public class AuthService implements UserDetailsService {
     @Transactional
     public void replaceOldPassword(String hash, String newPassword) {
         Optional<User> user = this.userRepository.getUserByHash(hash);
+        if (user.isEmpty()) throw new UserNotFoundException("User not found");
+
         user.get().setPassword(encoder.encode(newPassword));
         this.userRepository.save(user.get());
     }
 
+    /**
+     * Генерируем код для смены пароля
+     * @return сгенерированный код
+     */
     public int generateResetPasswordSecretCode() {
         Random random = new Random();
         return random.nextInt(999999) + 1;
     }
 
-    public void saveSecretCode(long userId, String email, int secretCode, String hash) {
+    /**
+     * Сохраняем заявку на автоматическую смену пароля
+     * @param email email
+     * @return secretCode и hash
+     */
+    @Transactional
+    public Map<String, String> saveSecretCode(String email) {
+        int secretCode = this.generateResetPasswordSecretCode();
+        String hash = UUID.randomUUID().toString();
+
+        Optional<User> user = this.getUserByEmail(email);
+        if (user.isEmpty()) throw new UserNotFoundException("User not found");
+
         this.userRepository.saveSecretCode(
-            email, String.valueOf(secretCode), LocalDateTime.now(), userId, hash
+            email, String.valueOf(secretCode), LocalDateTime.now(), user.get().getId(), hash
+        );
+
+        return Map.of(
+                "secretCode", String.valueOf(secretCode),
+                "hash", hash
         );
     }
 
-    public Optional<User> getChangedUser(String hash, String secretCode, BindingResult bindingResult) {
-        UserIdAndSecretCode userData = this.userRepository.getUserIdAndSecretCode(hash);
+    /**
+     * Получаем юзера по хешу, user_id из таблицы auto_password_change
+     * и по полученному id достаем юзера из users
+     * @param hash hash
+     * @return user
+     */
+    @Transactional(readOnly = true)
+    public Optional<User> getChangedUser(String hash) {
+        long userId = this.userRepository.getUserId(hash);
 
-        if(!userData.getSecretCode().equals(secretCode)) {
+        return this.userRepository.findById(userId);
+    }
+
+    /**
+     * Сравниваем код, который получили по почте с секретным кодом в бд
+     * @param hash по hash достаем секретный код из auto_password_change
+     * @param secretCode введенный пользователем код
+     * @param bindingResult для ошибок
+     * @return map с ошибками валидации, если таковые есть
+     */
+    @Transactional(readOnly = true)
+    public Map<String, String> compareSecretCode(String hash, String secretCode, BindingResult bindingResult) {
+        String code = this.userRepository.getUserSecretCode(hash);
+
+        if(!code.equals(secretCode)) {
             bindingResult.rejectValue("error", "", "code not matched");
         }
 
-        return this.userRepository.findById(userData.getUserId());
+        return validationHandler(bindingResult);
     }
 
+    /**
+     * Генерируем новый пароль и меняем его в бд
+     * @param user user
+     * @return новый пароль
+     */
+    @Transactional
     public String autoChangePassword(User user) {
         String newPass = UUID.randomUUID().toString();
 
@@ -239,7 +301,12 @@ public class AuthService implements UserDetailsService {
         return newPass;
     }
 
-    public Map<String, String> validationHandler(BindingResult bindingResult) {
+    /**
+     * Обрабатываем ошибки валидации
+     * @param bindingResult {@link BindingResult}
+     * @return map с ошибками валидации
+     */
+    private Map<String, String> validationHandler(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
                 .collect(Collectors.toMap(
                         FieldError::getField,

@@ -1,4 +1,4 @@
-package com.linker.linker.controller;
+package com.linker.linker.exception.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

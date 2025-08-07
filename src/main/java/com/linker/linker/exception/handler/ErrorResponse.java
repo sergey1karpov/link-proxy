@@ -1,5 +1,8 @@
-package com.linker.linker.controller;
+package com.linker.linker.exception.handler;
 
+import lombok.Getter;
+
+@Getter
 public class ErrorResponse {
     private int status;
     private String message;
@@ -11,16 +14,4 @@ public class ErrorResponse {
         this.timestamp = timestamp;
     }
 
-    // Геттеры и сеттеры
-    public int getStatus() {
-        return status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
 }
