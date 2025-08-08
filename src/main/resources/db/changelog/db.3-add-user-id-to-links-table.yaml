@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-id-to-links
+      author: your_name
+      changes:
+        - addColumn:
+            tableName: links
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true  # Измени на false, если поле обязательно
+        - addForeignKeyConstraint:
+            baseTableName: links
+            baseColumnNames: user_id
+            constraintName: fk_links_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+

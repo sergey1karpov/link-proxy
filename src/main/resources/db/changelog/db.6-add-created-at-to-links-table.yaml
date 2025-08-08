@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-created-at-to-links
+      author: your_name
+      changes:
+        - addColumn:
+            tableName: links
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: true

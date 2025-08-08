@@ -33,6 +33,10 @@ public class Link {
     @Column(name = "time_to_leave")
     private LocalDateTime timeToLeave;
 
-    @ManyToMany(mappedBy = "links")
-    private List<User> users = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }
