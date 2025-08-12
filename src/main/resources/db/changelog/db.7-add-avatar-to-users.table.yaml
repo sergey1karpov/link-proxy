@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-avatar-column-to-users
+      author: giga-code
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: avatar
+                  type: VARCHAR(255)
+                  remarks: User image
+                  constraints:
+                    nullable: true

@@ -29,6 +29,8 @@ public class User implements UserDetails {
 
     private String password;
 
+    private String avatar;
+
     @OneToMany(
             mappedBy = "user",
             fetch = FetchType.EAGER,

@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/db.5-create-auto-reset-password-table.yaml
   - include:
       file: db/changelog/db.6-add-created-at-to-links-table.yaml
+  - include:
+      file: db/changelog/db.7-add-avatar-to-users.table.yaml
