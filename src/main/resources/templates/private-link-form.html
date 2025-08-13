@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Введите код</title>
+</head>
+<body>
+<h2>Ссылка защищена</h2>
+<div th:if="${error}" style="color: red; margin-bottom: 10px;">
+    <p th:text="${error}"></p>
+</div>
+<form th:action="@{/cc/{hash}/check(hash=${hash})}" method="post">
+    <label for="code">Код доступа:</label>
+    <input type="text" id="code" name="code" required>
+    <button type="submit">Перейти</button>
+</form>
+</body>
+</html>

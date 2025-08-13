@@ -30,6 +30,9 @@ public class Link {
     @Column(name = "time_to_leave")
     private LocalDateTime timeToLeave;
 
+    @Column(name = "private_code")
+    private String privateCode;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     @ToString.Exclude

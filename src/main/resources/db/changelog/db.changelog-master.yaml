@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/db.6-add-created-at-to-links-table.yaml
   - include:
       file: db/changelog/db.7-add-avatar-to-users.table.yaml
+  - include:
+      file: db/changelog/db.8-add-private-code-to-links-table.yaml

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-private-code-column-to-links
+      author: giga-code
+      changes:
+        - addColumn:
+            tableName: links
+            columns:
+              - column:
+                  name: private_code
+                  type: VARCHAR(255)
+                  remarks: links private code
+                  constraints:
+                    nullable: true

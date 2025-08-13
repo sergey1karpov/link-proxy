@@ -24,6 +24,9 @@ public class LinkDtoRequest {
     private Status status;
 
     @Nullable
+    private String privateCode;
+
+    @Nullable
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
     private LocalDateTime timeToLeave;
 }
