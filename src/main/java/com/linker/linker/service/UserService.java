@@ -18,6 +18,10 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
 
+    public User getUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     public void updateUserProfile(User mappedUser, MultipartFile file) throws IOException {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

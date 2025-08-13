@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,12 @@ import java.io.IOException;
 public class UserController {
     private final UserMapper userMapper;
     private final UserService userService;
+
+    @GetMapping
+    @Operation(summary = "Получение пользователя")
+    public ResponseEntity<User> getUser() {
+        return ResponseEntity.ok(this.userService.getUser());
+    }
 
     @PatchMapping
     @Operation(summary = "Изменение пользователя")

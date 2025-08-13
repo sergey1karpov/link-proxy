@@ -1,5 +1,6 @@
 package com.linker.linker.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.linker.linker.entity.utils.Status;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,6 +37,7 @@ public class Link {
     @ManyToOne
     @JoinColumn(name = "user_id")
     @ToString.Exclude
+    @JsonBackReference
     private User user;
 
     @Column(name = "created_at")

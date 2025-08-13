@@ -1,5 +1,6 @@
 package com.linker.linker.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.linker.linker.entity.utils.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,7 @@ public class User implements UserDetails {
 
     private String email;
 
+    @Transient
     private String password;
 
     private String avatar;
@@ -36,6 +38,7 @@ public class User implements UserDetails {
             fetch = FetchType.EAGER,
             cascade = CascadeType.ALL
     )
+    @JsonManagedReference
     private List<Link> links = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

@@ -1,7 +1,9 @@
 package com.linker.linker.service;
 
+import com.linker.linker.dto.request.LinkDtoRequest;
 import com.linker.linker.entity.Link;
 import com.linker.linker.entity.User;
+import com.linker.linker.exception.LinkNotFoundException;
 import com.linker.linker.handler.UrlHashGenerator;
 import com.linker.linker.repository.LinkRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +22,19 @@ public class LinkService {
         mappedLink.setNewUrl(newLinkHash);
         mappedLink.setUser(user);
 
-        linkRepository.save(mappedLink);
+        this.linkRepository.save(mappedLink);
 
         return newLinkHash;
+    }
+
+    public Link update(Long id, LinkDtoRequest request) {
+        Link link = this.linkRepository.findById(id)
+                .orElseThrow(() -> new LinkNotFoundException("Link not found"));
+
+        link.setOldUrl(request.getOldUrl());
+        link.setStatus(request.getStatus() == null ? link.getStatus() : request.getStatus());
+        link.setTimeToLeave(request.getTimeToLeave());
+
+        return this.linkRepository.save(link);
     }
 }
