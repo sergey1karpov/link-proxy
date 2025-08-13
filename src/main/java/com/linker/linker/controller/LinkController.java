@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/link")
@@ -31,12 +34,17 @@ public class LinkController {
      */
     @PostMapping
     @Operation(summary = "Создание ссылки")
-    public ResponseEntity<String> createLink(
+    public ResponseEntity<Map<String, String>> createLink(
             @Validated(OnCreate.class) @RequestBody LinkDtoRequest request
     ) {
-        Link mapperLink = this.linkMapper.toEntity(request);
+        String shortLink = this.linkService.createNewLink(this.linkMapper.toEntity(request));
 
-        return ResponseEntity.ok(this.linkService.createNewLink(mapperLink));
+        String qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://localhost/cc/" + shortLink;
+
+        return ResponseEntity.ok(Map.of(
+                "link", shortLink,
+                "qrCode", qrCodeUrl
+        ));
     }
 
     @PatchMapping("/{id}")
