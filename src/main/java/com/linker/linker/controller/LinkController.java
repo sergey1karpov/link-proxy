@@ -8,7 +8,6 @@ import com.linker.linker.mapper.LinkMapper;
 import com.linker.linker.service.LinkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -51,7 +48,7 @@ public class LinkController {
         ));
     }
 
-    @PatchMapping("/{id:\\\\d+}")
+    @PatchMapping("/{id:\\d+}")
     @Operation(summary = "Обновление ссылки")
     public ResponseEntity<Link> updateOldLink(
             @PathVariable Long id,

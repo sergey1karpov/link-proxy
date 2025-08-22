@@ -38,6 +38,7 @@ public class LinkService {
         link.setOldUrl(request.getOldUrl());
         link.setStatus(request.getStatus() == null ? link.getStatus() : request.getStatus());
         link.setTimeToLeave(request.getTimeToLeave());
+        link.setPrivateCode(request.getPrivateCode());
 
         return this.linkRepository.save(link);
     }
